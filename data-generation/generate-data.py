@@ -1,6 +1,6 @@
 from typing import Dict
 import numpy as np
-from numpy.lib.scimath import log2, power
+from numpy.lib.scimath import log10, power
 
 import csv
 
@@ -31,13 +31,13 @@ def generate_sort_execution_times(
         sd = 1
 
         def map_execution_time(distribution_location: int):
-            # Best and average case are O(log(nlog(n)))
+            # Best and average case are O(nlog(n))
             # Worst case is O(n^2)
             # If the result are outside of 3 standard deviations on the positive side, use worst case
             if distribution_location > (3 * sd):
                 exec_time = power(user_amount, 2)
             else:
-                exec_time = log2(user_amount)
+                exec_time = user_amount * log10(user_amount)
             # Get a random positive value between a three quarters of the execution time and the execution time
             return np.random.uniform(exec_time * 0.75, exec_time) * overhead
 
