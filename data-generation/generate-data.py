@@ -39,7 +39,7 @@ def generate_sort_execution_times(
             else:
                 exec_time = log2(user_amount)
             # Get a random positive value between a three quarters of the execution time and the execution time
-            return np.random.uniform(exec_time * 0.75, exec_time) + overhead
+            return np.random.uniform(exec_time * 0.75, exec_time) * overhead
 
         normal_distribution = np.random.normal(0.0, sd, iterations)
         user_amount_result = np.array(
@@ -70,5 +70,5 @@ def create_data_file(
 
 
 if __name__ == "__main__":
-    create_data_file("javascript-data.csv", overhead=10)
+    create_data_file("javascript-data.csv", overhead=1.5)
     create_data_file("webasm-data.csv", overhead=1)
