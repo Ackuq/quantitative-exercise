@@ -50,25 +50,60 @@ def generate_sort_execution_times(
     return result
 
 
+def generate_render_execution_times(
+    overhead: int = 1, iterations: int = 10, user_amounts: np.ndarray = USER_AMOUNTS
+):
+    result = {user_amount: None for user_amount in user_amounts}
+
+    for user_amount in user_amounts:
+
+        def map_rendering_time(render_time):
+            # To account for randomness in the rendering time, create a randomness constant
+            randomness = np.random.uniform(-user_amount / 4, user_amount / 4)
+            return render_time + randomness
+
+        user_amount_result = np.array(
+            list(map(map_rendering_time, np.full(iterations, user_amount * overhead)))
+        )
+        result[user_amount] = user_amount_result
+
+    return result
+
+
 def create_data_file(
     file_str: str,
-    overhead: int = 1,
+    overhead_sort: int = 1,
+    overhead_render: int = 1,
     iterations: int = 10,
     user_amounts: np.ndarray = USER_AMOUNTS,
 ):
-    data = generate_sort_execution_times(
-        iterations=iterations, overhead=overhead, user_amounts=user_amounts
+    data_sort = generate_sort_execution_times(
+        iterations=iterations, overhead=overhead_sort, user_amounts=user_amounts
     )
-    with open(file_str, "w") as file:
+
+    data_render = generate_render_execution_times(
+        iterations=iterations, overhead=overhead_render, user_amounts=user_amounts
+    )
+
+    with open(file_str + "-sort.csv", "w") as file:
         writer = csv.writer(file)
         columns = list(map(lambda i: "Iteration {}".format(i + 1), range(iterations)))
         writer.writerow(["User amount"] + columns)
-        for user_amount, result in data.items():
+        for user_amount, result in data_sort.items():
+            writer.writerow(
+                np.concatenate([np.array([user_amount], dtype=int), result])
+            )
+
+    with open(file_str + "-render.csv", "w") as file:
+        writer = csv.writer(file)
+        columns = list(map(lambda i: "Iteration {}".format(i + 1), range(iterations)))
+        writer.writerow(["User amount"] + columns)
+        for user_amount, result in data_render.items():
             writer.writerow(
                 np.concatenate([np.array([user_amount], dtype=int), result])
             )
 
 
 if __name__ == "__main__":
-    create_data_file("javascript-data.csv", overhead=1.5)
-    create_data_file("webasm-data.csv", overhead=1)
+    create_data_file("javascript-data", overhead_render=1, overhead_sort=1.5)
+    create_data_file("webasm-data", overhead_render=1.2, overhead_sort=1)
