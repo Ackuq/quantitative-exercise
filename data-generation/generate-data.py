@@ -38,8 +38,8 @@ def generate_sort_execution_times(
                 exec_time = power(user_amount, 2)
             else:
                 exec_time = user_amount * log10(user_amount)
-            # Get a random positive value between a three quarters of the execution time and the execution time
-            return np.random.uniform(exec_time * 0.75, exec_time) * overhead
+            # Get a random positive value between a 90% of the execution time and the execution time
+            return np.random.uniform(exec_time * 0.90, exec_time * 1.10) * overhead
 
         normal_distribution = np.random.normal(0.0, sd, iterations)
         user_amount_result = np.array(
@@ -59,7 +59,7 @@ def generate_render_execution_times(
 
         def map_rendering_time(render_time):
             # To account for randomness in the rendering time, create a randomness constant
-            randomness = np.random.uniform(-user_amount / 4, user_amount / 4)
+            randomness = np.random.uniform(-user_amount / 8, user_amount / 8)
             return render_time + randomness
 
         user_amount_result = np.array(
