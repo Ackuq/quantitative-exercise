@@ -85,6 +85,17 @@ def create_data_file(
         iterations=iterations, overhead=overhead_render, user_amounts=user_amounts
     )
 
+    with open(file_str + ".csv", "w") as file:
+        writer = csv.writer(file)
+        columns = list(map(lambda i: "Iteration {}".format(i + 1), range(iterations)))
+        writer.writerow(["User amount"] + columns)
+        for user_amount, result_sort in data_sort.items():
+            result_render = data_render[user_amount]
+            result = np.add(result_sort, result_render)
+            writer.writerow(
+                np.concatenate([np.array([user_amount], dtype=int), result])
+            )
+
     with open(file_str + "-sort.csv", "w") as file:
         writer = csv.writer(file)
         columns = list(map(lambda i: "Iteration {}".format(i + 1), range(iterations)))
