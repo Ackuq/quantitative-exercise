@@ -16,9 +16,9 @@ jpeg(file = "out/js-plot.jpeg")
 plot(x, y,
 xlab = "User list size", ylab = "Execution time (ms)");
 curve(time_func(x, 1, 1), add = TRUE);
-fit <- nls(y~time_func(x, k1, k2), start = list(k1 = 1, k2 = 2))
+fit <- nls(y~time_func(x, k1, k2), start = list(k1 = 1, k2 = 1))
 dev.off();
-print(fit)
+print(summary(fit))
 
 
 wasm_data <- read.csv(file = "data-generation/webasm-data.csv");
@@ -32,13 +32,20 @@ xlab = "User list size", ylab = "Execution time (ms)");
 curve(time_func(x, 1, 1), add = TRUE);
 fit <- nls(y~time_func(x, k1, k2), start = list(k1 = 1, k2 = 1))
 dev.off();
-print(fit)
+print(summary(fit))
 
 y1 <- js_data_refined[, 2];
 y2 <- wasm_data_refined[, 2];
 y <- y1 / y2;
 
+speedup_func <- function(t_w, s) {
+  t_w * s
+}
 jpeg(file = "out/speedup-plot.jpeg")
 plot(x, y,
 xlab = "User list size", ylab = "Speedup");
+fit <- lm(y1~y2)
+abline(lm(y ~ x));
 dev.off();
+
+print(summary(fit))
