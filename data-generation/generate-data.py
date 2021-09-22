@@ -38,8 +38,8 @@ def generate_sort_execution_times(
                 exec_time = power(user_amount, 2)
             else:
                 exec_time = user_amount * log10(user_amount)
-            # Get a random positive value between a three quarters of the execution time and the execution time
-            return np.random.uniform(exec_time * 0.75, exec_time) * overhead
+            # Get a random positive value between a 90% of the execution time and the execution time
+            return np.random.uniform(exec_time * 0.90, exec_time * 1.10) * overhead
 
         normal_distribution = np.random.normal(0.0, sd, iterations)
         user_amount_result = np.array(
@@ -59,7 +59,7 @@ def generate_render_execution_times(
 
         def map_rendering_time(render_time):
             # To account for randomness in the rendering time, create a randomness constant
-            randomness = np.random.uniform(-user_amount / 4, user_amount / 4)
+            randomness = np.random.uniform(-user_amount / 8, user_amount / 8)
             return render_time + randomness
 
         user_amount_result = np.array(
@@ -84,6 +84,17 @@ def create_data_file(
     data_render = generate_render_execution_times(
         iterations=iterations, overhead=overhead_render, user_amounts=user_amounts
     )
+
+    with open(file_str + ".csv", "w") as file:
+        writer = csv.writer(file)
+        columns = list(map(lambda i: "Iteration {}".format(i + 1), range(iterations)))
+        writer.writerow(["User amount"] + columns)
+        for user_amount, result_sort in data_sort.items():
+            result_render = data_render[user_amount]
+            result = np.add(result_sort, result_render)
+            writer.writerow(
+                np.concatenate([np.array([user_amount], dtype=int), result])
+            )
 
     with open(file_str + "-sort.csv", "w") as file:
         writer = csv.writer(file)
