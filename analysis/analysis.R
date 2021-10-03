@@ -4,23 +4,79 @@ library(matrixStats)
 # Read data files
 js_data <- read.csv(file = "data-generation/javascript-data.csv")
 
-# Find list size to execution time median rows.
-time_func <- function(n, k1, k2, c) {
-  n * log10(n) * k1 + n * k2 + c
+# Expected execution time function for sorting user list of n users
+time_sort_func <- function(n, k1, c1) {
+  n * log2(n) * k1 + c1
+}
+# Expected execution time function for rendering user list of n users
+time_render_func <- function(n, k2, c2) {
+   n * k2 + c2
 }
 
-# Generate graph for the specified data
-create_graphs <- function(data, output_file) {
-  x <- data[, 1]
-  y <- data[, 2]
-  jpeg(file = stringr::str_interp("out/${output_file}-plot.jpeg"))
+# Generate graph and fit expected equation for the specified sorting data
+create_sort_graphs <- function(js_data, wasm_data, output_file) {
+  # Define output file
+  jpeg(file = stringr::str_interp("out/sort-plot.jpeg"))
+
+
+  # Plot js sorting data
+  x <- js_data[, 1]
+  y <- js_data[, 2]
   plot(x, y,
     xlab = "User list size", ylab = "Execution time (ms)"
   )
-  curve(time_func(x, 1, 1, 0), add = TRUE)
-  fit <- nls(y ~ time_func(x, k1, k2, c), start = list(k1 = 1, k2 = 1, c = 0))
+  fit <- nls(y ~ time_sort_func(x, k1, c1), start = list(k1 = 1, c1 = 0))
+  print(summary(fit))
+
+
+  # Plot wasm sorting data
+  x <- wasm_data[, 1]
+  y <- wasm_data[, 2]
+  points(x, y, pch = 16);
+  fit <- nls(y ~ time_sort_func(x, k1, c1), start = list(k1 = 1, c1 = 0))
+
+  legend(
+    x = "topleft",
+    legend = c(
+      "JavaScript",
+      "WebAssembly"
+    ),
+    pch = c(1, 16)
+  )
+
   dev.off()
-  print(fit)
+  print(summary(fit))
+}
+
+# Generate graph and fit expected equation for the specified rendering data
+create_render_graphs <- function(js_data, wasm_data, output_file) {
+  jpeg(file = stringr::str_interp("out/render-plot.jpeg"))
+
+  # Plot js render data
+  x <- js_data[, 1]
+  y <- js_data[, 2]
+  plot(x, y,
+    xlab = "User list size", ylab = "Execution time (ms)"
+  )
+  # Fit js render data to expected equation
+  fit <- nls(y ~ time_render_func(x, k2, c2), start = list(k2 = 1, c2 = 0))
+  print(summary(fit))
+
+  x <- wasm_data[, 1]
+  y <- wasm_data[, 2]
+  points(x, y, pch = 16);
+  fit <- nls(y ~ time_render_func(x, k2, c2), start = list(k2 = 1, c2 = 0))
+
+  legend(
+    x = "topleft",
+    legend = c(
+      "JavaScript",
+      "WebAssembly"
+    ),
+    pch = c(1, 16)
+  )
+  dev.off()
+  print(summary(fit))
 }
 
 # Generate a speedup plot, using Y1/Y2
@@ -58,22 +114,31 @@ get_data <- function(file) {
 }
 
 
-js_data <- get_data(file = "data-generation/javascript-data.csv")
+js_sort_data <- get_data(file = "data-generation/javascript-data-sort.csv")
+wasm_sort_data <- get_data(file = "data-generation/webasm-data-sort.csv")
 
-wasm_data <- get_data(file = "data-generation/webasm-data.csv")
+js_render_data <- get_data(file = "data-generation/javascript-data-render.csv")
+wasm_render_data <- get_data(file = "data-generation/webasm-data-render.csv")
 
-create_graphs(
-  data = js_data$median, output_file = "js"
+
+print("Analyzing sorting");
+create_sort_graphs(
+  js_data = js_sort_data$median,
+  wasm_data = wasm_sort_data$median,
+  output_file = "js"
 )
 
-create_graphs(
-  data = wasm_data$median, output_file = "wasm"
+print("Analyzing rendering");
+create_render_graphs(
+  js_data = js_render_data$median,
+  wasm_data = wasm_render_data$median,
+  output_file = "js"
 )
 
 create_speedup_plot(
-  x = wasm_median[, 1],
-  y1 = js_median[, 2],
-  y2 = wasm_median[, 2]
+  x = wasm_sort_data$median[, 1] + wasm_render_data$median[, 1],
+  y1 = js_sort_data$median[, 2] + js_render_data$median[, 2],
+  y2 = wasm_sort_data$median[, 2] + wasm_render_data$median[, 2]
 )
 
 confidence_interval <- function(data, file_name) {
@@ -117,5 +182,6 @@ confidence_interval <- function(data, file_name) {
   dev.off()
 }
 
-confidence_interval(wasm_data, file_name = "wasm")
-confidence_interval(js_data, file_name = "js")
+# Commented out as they are not yet adapted to seperate sort and render times
+# confidence_interval(wasm_data, file_name = "wasm")
+# confidence_interval(js_data, file_name = "js")
